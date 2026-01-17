@@ -55,8 +55,8 @@ function PLUGIN:PostInstall(ctx)
             envPrefix = "PKG_CONFIG_PATH='" .. pkg_config_path .. "' "
         else
             -- ICU not found, disable it
-            print("Warning: ICU not found. Installing without ICU support.")
-            print("  To enable ICU: brew install icu4c")
+            io.stderr:write("Warning: ICU not found. Installing without ICU support.\n")
+            io.stderr:write("  To enable ICU: brew install icu4c\n")
             configureOptions = configureOptions .. " --without-icu"
         end
 
@@ -76,8 +76,8 @@ function PLUGIN:PostInstall(ctx)
                 table.insert(include_paths, util_linux_path .. "/include")
             else
                 -- Neither UUID library available
-                print("Warning: UUID library not found. Installing without UUID support.")
-                print("  To enable UUID: brew install ossp-uuid")
+                io.stderr:write("Warning: UUID library not found. Installing without UUID support.\n")
+                io.stderr:write("  To enable UUID: brew install ossp-uuid\n")
             end
         end
 
@@ -95,8 +95,8 @@ function PLUGIN:PostInstall(ctx)
         local icu_check = os.execute("pkg-config --exists icu-uc 2>/dev/null")
         if icu_check ~= 0 and icu_check ~= true then
             -- ICU not found, disable it
-            print("Warning: ICU not found. Installing without ICU support.")
-            print("  To enable ICU: sudo apt install libicu-dev (Debian/Ubuntu)")
+            io.stderr:write("Warning: ICU not found. Installing without ICU support.\n")
+            io.stderr:write("  To enable ICU: sudo apt install libicu-dev (Debian/Ubuntu)\n")
             configureOptions = configureOptions .. " --without-icu"
         end
     end
