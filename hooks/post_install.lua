@@ -20,19 +20,19 @@ function PLUGIN:PostInstall(ctx)
     local homebrew_prefix = os.getenv("HOMEBREW_PREFIX") or "/opt/homebrew"
 
     if os_type == "darwin" then
-        -- macOS: use BSD UUID
-        configureOptions = configureOptions .. " --with-uuid=bsd"
-
-        -- Add Homebrew paths for OpenSSL and ICU
+        -- Homebrew paths
         local openssl_path = homebrew_prefix .. "/opt/openssl"
         local icu_path = homebrew_prefix .. "/opt/icu4c"
+        local ossp_uuid_path = homebrew_prefix .. "/opt/ossp-uuid"
+        local util_linux_path = homebrew_prefix .. "/opt/util-linux"
 
         -- Build library and include paths
         local lib_paths = {}
         local include_paths = {}
+        local f
 
         -- Check if OpenSSL exists in Homebrew
-        local f = io.open(openssl_path .. "/lib", "r")
+        f = io.open(openssl_path .. "/lib", "r")
         if f ~= nil then
             f:close()
             table.insert(lib_paths, openssl_path .. "/lib")
@@ -56,6 +56,24 @@ function PLUGIN:PostInstall(ctx)
         else
             -- ICU not found, disable it
             configureOptions = configureOptions .. " --without-icu"
+        end
+
+        -- Check for UUID library: prefer ossp-uuid, then util-linux (e2fs), otherwise skip
+        f = io.open(ossp_uuid_path .. "/lib", "r")
+        if f ~= nil then
+            f:close()
+            configureOptions = configureOptions .. " --with-uuid=ossp"
+            table.insert(lib_paths, ossp_uuid_path .. "/lib")
+            table.insert(include_paths, ossp_uuid_path .. "/include")
+        else
+            f = io.open(util_linux_path .. "/lib", "r")
+            if f ~= nil then
+                f:close()
+                configureOptions = configureOptions .. " --with-uuid=e2fs"
+                table.insert(lib_paths, util_linux_path .. "/lib")
+                table.insert(include_paths, util_linux_path .. "/include")
+            end
+            -- If neither is available, just don't enable UUID (it's optional)
         end
 
         if #lib_paths > 0 then
