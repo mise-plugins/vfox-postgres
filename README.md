@@ -1,0 +1,134 @@
+# vfox-postgres
+
+A [vfox](https://github.com/version-fox/vfox) / [mise](https://mise.jdx.dev) plugin for managing [PostgreSQL](https://www.postgresql.org/) versions.
+
+## Features
+
+- **Dynamic version fetching**: Automatically fetches available versions from PostgreSQL's official FTP server
+- **Always up-to-date**: No static version list to maintain
+- **Compiles from source**: Uses official PostgreSQL source releases
+- **Includes contrib modules**: Builds and installs useful extensions
+- **Automatic initdb**: Initializes a database cluster (can be skipped)
+- **Cross-platform**: Works on Linux and macOS
+
+## Requirements
+
+- A C compiler (gcc or clang)
+- make
+- readline (libreadline-dev on Debian/Ubuntu)
+- zlib (zlib1g-dev on Debian/Ubuntu)
+- OpenSSL (libssl-dev on Debian/Ubuntu)
+
+### macOS
+
+```bash
+xcode-select --install
+brew install openssl readline
+```
+
+### Debian/Ubuntu
+
+```bash
+sudo apt-get install build-essential libreadline-dev zlib1g-dev libssl-dev uuid-dev
+```
+
+### RHEL/CentOS
+
+```bash
+sudo yum groupinstall "Development Tools"
+sudo yum install readline-devel zlib-devel openssl-devel uuid-devel
+```
+
+## Installation
+
+### With mise
+
+```bash
+mise install postgres@latest
+mise install postgres@17.2
+mise install postgres@16.6
+```
+
+### With vfox
+
+```bash
+vfox add postgres
+vfox install postgres@latest
+```
+
+## Usage
+
+```bash
+# List all available versions
+mise ls-remote postgres
+
+# Install a specific version
+mise install postgres@17.2
+
+# Set global version
+mise use -g postgres@17.2
+
+# Set local version (creates .mise.toml)
+mise use postgres@17.2
+```
+
+## Environment Variables
+
+This plugin sets the following environment variables:
+
+- `PATH` - Adds the PostgreSQL bin directory
+- `PGDATA` - Points to the data directory (`{install_path}/data`)
+- `LD_LIBRARY_PATH` - Adds PostgreSQL lib directory (Linux only)
+
+## Configuration
+
+### Skip initdb
+
+If you don't want the plugin to run `initdb` automatically:
+
+```bash
+POSTGRES_SKIP_INITDB=1 mise install postgres@17.2
+```
+
+### Custom configure options
+
+Add extra configure options:
+
+```bash
+POSTGRES_EXTRA_CONFIGURE_OPTIONS="--with-python" mise install postgres@17.2
+```
+
+Or override all configure options (prefix is always added):
+
+```bash
+POSTGRES_CONFIGURE_OPTIONS="--with-openssl --with-python" mise install postgres@17.2
+```
+
+## Starting PostgreSQL
+
+After installation:
+
+```bash
+# Start the server
+pg_ctl -D $PGDATA -l logfile start
+
+# Or run in foreground
+postgres -D $PGDATA
+
+# Connect
+psql -U postgres
+```
+
+## How It Works
+
+This plugin:
+
+1. Fetches the list of available versions from [ftp.postgresql.org](https://ftp.postgresql.org/pub/source/)
+2. Downloads the source tarball for the requested version
+3. Compiles PostgreSQL with `./configure && make && make install`
+4. Builds and installs contrib modules
+5. Runs `initdb` to create an initial database cluster
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
