@@ -10,30 +10,70 @@ function PLUGIN:PostInstall(ctx)
 
     -- Build configure options
     local configureOptions = "--prefix='" .. sdkPath .. "'"
+    local envPrefix = "" -- Environment variables to prepend to configure command
 
     -- Add common options
     configureOptions = configureOptions .. " --with-openssl --with-zlib"
 
     -- Try to add UUID support (e2fs on Linux, BSD on macOS)
     local os_type = RUNTIME.osType
+    local homebrew_prefix = os.getenv("HOMEBREW_PREFIX") or "/opt/homebrew"
+
     if os_type == "darwin" then
         -- macOS: use BSD UUID
         configureOptions = configureOptions .. " --with-uuid=bsd"
 
-        -- Add Homebrew paths for OpenSSL
-        local homebrew_prefix = os.getenv("HOMEBREW_PREFIX") or "/opt/homebrew"
+        -- Add Homebrew paths for OpenSSL and ICU
         local openssl_path = homebrew_prefix .. "/opt/openssl"
+        local icu_path = homebrew_prefix .. "/opt/icu4c"
+
+        -- Build library and include paths
+        local lib_paths = {}
+        local include_paths = {}
 
         -- Check if OpenSSL exists in Homebrew
         local f = io.open(openssl_path .. "/lib", "r")
         if f ~= nil then
             f:close()
-            configureOptions = configureOptions .. " --with-libraries='" .. openssl_path .. "/lib'"
-            configureOptions = configureOptions .. " --with-includes='" .. openssl_path .. "/include'"
+            table.insert(lib_paths, openssl_path .. "/lib")
+            table.insert(include_paths, openssl_path .. "/include")
+        end
+
+        -- Check if ICU exists in Homebrew (PostgreSQL 17+ requires ICU by default)
+        f = io.open(icu_path .. "/lib", "r")
+        if f ~= nil then
+            f:close()
+            table.insert(lib_paths, icu_path .. "/lib")
+            table.insert(include_paths, icu_path .. "/include")
+            -- Set PKG_CONFIG_PATH for ICU (prepend to configure command)
+            local pkg_config_path = os.getenv("PKG_CONFIG_PATH") or ""
+            if pkg_config_path ~= "" then
+                pkg_config_path = icu_path .. "/lib/pkgconfig:" .. pkg_config_path
+            else
+                pkg_config_path = icu_path .. "/lib/pkgconfig"
+            end
+            envPrefix = "PKG_CONFIG_PATH='" .. pkg_config_path .. "' "
+        else
+            -- ICU not found, disable it
+            configureOptions = configureOptions .. " --without-icu"
+        end
+
+        if #lib_paths > 0 then
+            configureOptions = configureOptions .. " --with-libraries='" .. table.concat(lib_paths, ":") .. "'"
+        end
+        if #include_paths > 0 then
+            configureOptions = configureOptions .. " --with-includes='" .. table.concat(include_paths, ":") .. "'"
         end
     else
         -- Linux: use e2fs UUID
         configureOptions = configureOptions .. " --with-uuid=e2fs"
+
+        -- Check if ICU is available on Linux
+        local icu_check = os.execute("pkg-config --exists icu-uc 2>/dev/null")
+        if icu_check ~= 0 and icu_check ~= true then
+            -- ICU not found, disable it
+            configureOptions = configureOptions .. " --without-icu"
+        end
     end
 
     -- Allow user to override or extend configure options
@@ -50,7 +90,7 @@ function PLUGIN:PostInstall(ctx)
 
     -- Run configure
     print("Configuring PostgreSQL with: " .. configureOptions)
-    local configureCmd = string.format("cd '%s' && ./configure %s", sdkPath, configureOptions)
+    local configureCmd = string.format("cd '%s' && %s./configure %s", sdkPath, envPrefix, configureOptions)
     local status = os.execute(configureCmd)
     if status ~= 0 and status ~= true then
         error("Failed to configure PostgreSQL")
