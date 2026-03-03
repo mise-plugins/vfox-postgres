@@ -104,6 +104,22 @@ Or override all configure options (prefix is always added):
 POSTGRES_CONFIGURE_OPTIONS="--with-openssl --with-python" mise install postgres@17.2
 ```
 
+### OpenSSL location override (macOS)
+
+On macOS, this plugin resolves OpenSSL in this order:
+
+1. `OPENSSL_ROOT_DIR`, then `OPENSSL_DIR`
+2. `pkg-config --variable=prefix openssl`
+3. Nix paths (`NIX_SSL_CERT_FILE`, `~/.nix-profile`, `/nix/var/nix/profiles/default`)
+4. Homebrew (`$HOMEBREW_PREFIX/opt/openssl@3`, `$HOMEBREW_PREFIX/opt/openssl`)
+5. Common fallbacks (`/usr/local/opt/openssl@3`, `/usr/local/opt/openssl`, `/opt/local/libexec/openssl3`, `/opt/local`, `/usr/local/ssl`)
+
+If your OpenSSL is installed in a custom location, set one of these overrides:
+
+```bash
+OPENSSL_ROOT_DIR="/opt/local/libexec/openssl3" mise install postgres@17.2
+```
+
 ## Starting PostgreSQL
 
 After installation:
