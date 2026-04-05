@@ -29,7 +29,9 @@ brew install openssl readline
 ### Debian/Ubuntu
 
 ```bash
-sudo apt-get install build-essential libreadline-dev zlib1g-dev libssl-dev uuid-dev
+sudo apt-get install -y \
+  build-essential libreadline-dev zlib1g-dev libssl-dev uuid-dev \
+  bison flex perl pkg-config libicu-dev
 ```
 
 ### RHEL/CentOS
