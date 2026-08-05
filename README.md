@@ -32,6 +32,14 @@ brew install openssl readline
 sudo apt-get install build-essential libreadline-dev zlib1g-dev libssl-dev uuid-dev
 ```
 
+#### Debian-only
+
+On Debian (tested on version 13/Trixie) you also need `bison` and `flex`:
+
+```bash
+sudo apt-get install bison flex
+```
+
 ### RHEL/CentOS
 
 ```bash
