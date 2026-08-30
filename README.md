@@ -18,6 +18,7 @@ A [vfox](https://github.com/version-fox/vfox) / [mise](https://mise.jdx.dev) plu
 - readline (libreadline-dev on Debian/Ubuntu)
 - zlib (zlib1g-dev on Debian/Ubuntu)
 - OpenSSL (libssl-dev on Debian/Ubuntu)
+- UUID headers (provided by macOS; uuid-dev on Debian/Ubuntu)
 
 ### macOS
 
@@ -25,6 +26,8 @@ A [vfox](https://github.com/version-fox/vfox) / [mise](https://mise.jdx.dev) plu
 xcode-select --install
 brew install openssl readline
 ```
+
+UUID support uses the API built into macOS, so neither `ossp-uuid` nor `util-linux` is required.
 
 ### Debian/Ubuntu
 
